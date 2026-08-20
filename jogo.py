@@ -21,9 +21,14 @@ class Personagem:
         self.ouro = 0
 
         # EQUIPAMENTOS
-        self.arma = None
+        # O personagem sempre começa com uma arma principal.
+        # Ela pode ser melhorada mesmo antes de encontrar uma espada.
+        self.arma = "Arma principal"
         self.anel = None
         self.armadura = None
+
+        # ELEMENTO DO ANEL MÁGICO
+        self.elemento_anel = None
 
         # NÍVEIS DOS EQUIPAMENTOS
         self.nivel_espada = 0
@@ -109,6 +114,12 @@ class Personagem:
             f"Ouro: {self.ouro}"
         )
 
+        if self.anel == "Anel mágico":
+            print(
+                f"Elemento do Anel mágico: "
+                f"{self.elemento_anel}"
+            )
+
 
     # ==================================================
     # USAR ITEM
@@ -156,7 +167,7 @@ class Personagem:
         # ESPADA DE FERRO
         elif item == "Espada de ferro":
 
-            if self.arma is not None:
+            if self.arma is not None and self.arma != "Arma principal":
 
                 print(
                     "\nVocê já possui uma arma equipada!"
@@ -178,9 +189,9 @@ class Personagem:
 
 
         # ESPADA DE AÇO
-        elif item == "Espada de aço":
+        elif item == "Espada de ferro reforçada":
 
-            if self.arma is not None:
+            if self.arma is not None and self.arma != "Arma principal":
 
                 print(
                     "\nVocê já possui uma arma equipada!"
@@ -194,7 +205,7 @@ class Personagem:
 
             self.danobase += 25
 
-            print("\nEspada de aço equipada!")
+            print("\nEspada de ferro reforçada equipada!")
 
             print(
                 f"Dano: {self.danobase}"
@@ -224,9 +235,37 @@ class Personagem:
                 f"Agilidade: {self.agilidadebase}"
             )
 
+            print("\nEscolha o elemento do Anel mágico:")
+            print("1 - Água")
+            print("2 - Fogo")
+            print("3 - Terra")
+            print("4 - Vento")
+
+            while True:
+                elemento = input("\nEscolha o elemento: ")
+
+                if elemento == "1":
+                    self.elemento_anel = "Água"
+                    break
+                elif elemento == "2":
+                    self.elemento_anel = "Fogo"
+                    break
+                elif elemento == "3":
+                    self.elemento_anel = "Terra"
+                    break
+                elif elemento == "4":
+                    self.elemento_anel = "Vento"
+                    break
+                else:
+                    print("\nOpção inválida!")
+
+            print(
+                f"\n>>> Elemento escolhido: {self.elemento_anel} <<<"
+            )
+
 
         # ANEL ENCANTADO
-        elif item == "Anel encantado":
+        elif item == "Anel de agilidade":
 
             if self.anel is not None:
 
@@ -242,7 +281,7 @@ class Personagem:
 
             self.agilidadebase += 25
 
-            print("\nAnel encantado equipado!")
+            print("\nAnel de agilidade equipado!")
 
             print(
                 f"Agilidade: {self.agilidadebase}"
@@ -277,7 +316,7 @@ class Personagem:
 
 
         # ARMADURA DE AÇO
-        elif item == "Armadura de aço":
+        elif item == "Armadura de ferro reforçada":
 
             if self.armadura is not None:
 
@@ -295,7 +334,7 @@ class Personagem:
             self.hp += 50
 
             print(
-                "\nArmadura de aço equipada!"
+                "\nArmadura de ferro reforçada equipada!"
             )
 
             print(
@@ -333,11 +372,7 @@ class Personagem:
             if escolha == "1":
 
                 if self.arma is None:
-
-                    print(
-                        "\nVocê não possui uma arma."
-                    )
-
+                    print("\nVocê não possui uma arma.")
                     continue
 
                 custo = 100 + (
@@ -345,7 +380,15 @@ class Personagem:
                 )
 
                 print(
-                    f"\nCusto: {custo} ouro"
+                    f"\nArma atual: {self.arma}"
+                )
+
+                print(
+                    f"Nível da arma: {self.nivel_espada}"
+                )
+
+                print(
+                    f"Custo: {custo} ouro"
                 )
 
                 if self.ouro < custo:
@@ -360,10 +403,19 @@ class Personagem:
 
                 self.nivel_espada += 1
 
-                self.danobase += 10
+                # A melhoria usa o mesmo tipo de arma que foi
+                # encontrado/equipado no baú.
+                if self.arma == "Espada de ferro":
+                    self.danobase += 10
+
+                elif self.arma == "Espada de ferro reforçada":
+                    self.danobase += 15
+
+                else:
+                    self.danobase += 10
 
                 print(
-                    "\n>>> ARMA MELHORADA! <<<"
+                    f"\n>>> {self.arma.upper()} MELHORADA! <<<"
                 )
 
                 print(
@@ -406,15 +458,44 @@ class Personagem:
 
                 self.nivel_anel += 1
 
-                self.agilidadebase += 5
+                if self.anel == "Anel mágico":
+                    self.agilidadebase += 5
+
+                    # O Anel mágico recebe uma habilidade elemental.
+                    if self.elemento_anel == "Água":
+                        print("\nHabilidade: Onda Elemental")
+                        print("Efeito: causa dano extra de água.")
+
+                    elif self.elemento_anel == "Fogo":
+                        print("\nHabilidade: Chama Elemental")
+                        print("Efeito: causa dano extra de fogo.")
+
+                    elif self.elemento_anel == "Terra":
+                        print("\nHabilidade: Força da Terra")
+                        print("Efeito: aumenta a resistência do personagem.")
+
+                    elif self.elemento_anel == "Vento":
+                        print("\nHabilidade: Lâmina de Vento")
+                        print("Efeito: aumenta a agilidade do personagem.")
+
+                elif self.anel == "Anel de agilidade":
+                    self.agilidadebase += 10
+
+                else:
+                    self.agilidadebase += 5
 
                 print(
-                    "\n>>> ANEL MELHORADO! <<<"
+                    f"\n>>> {self.anel.upper()} MELHORADO! <<<"
                 )
 
                 print(
                     f"Agilidade: {self.agilidadebase}"
                 )
+
+                if self.anel == "Anel mágico":
+                    print(
+                        f"Elemento: {self.elemento_anel}"
+                    )
 
 
             # MELHORAR ARMADURA
@@ -448,11 +529,20 @@ class Personagem:
 
                 self.nivel_armadura += 1
 
-                self.hp_max += 25
-                self.hp += 25
+                if self.armadura == "Armadura de ferro":
+                    aumento_hp = 25
+
+                elif self.armadura == "Armadura de ferro reforçada":
+                    aumento_hp = 40
+
+                else:
+                    aumento_hp = 25
+
+                self.hp_max += aumento_hp
+                self.hp += aumento_hp
 
                 print(
-                    "\n>>> ARMADURA MELHORADA! <<<"
+                    f"\n>>> {self.armadura.upper()} MELHORADA! <<<"
                 )
 
                 print(
@@ -488,13 +578,13 @@ class Personagem:
                 f"\nSeu ouro: {self.ouro}"
             )
 
-            print("\n1 - Espada de aço")
+            print("\n1 - Espada de ferro reforçada")
             print("    +25 dano - 300 ouro")
 
-            print("\n2 - Anel encantado")
+            print("\n2 - Anel de agilidade")
             print("    +25 agilidade - 300 ouro")
 
-            print("\n3 - Armadura de aço")
+            print("\n3 - Armadura de ferro reforçada")
             print("    +50 HP - 400 ouro")
 
             print("\n4 - Poção de cura")
@@ -514,7 +604,7 @@ class Personagem:
 
                 preco = 300
 
-                if self.arma is not None:
+                if self.arma is not None and self.arma != "Arma principal":
 
                     print(
                         "\nVocê já possui uma arma equipada."
@@ -533,7 +623,7 @@ class Personagem:
                 self.ouro -= preco
 
                 self.adicionar_item(
-                    "Espada de aço"
+                    "Espada de ferro reforçada"
                 )
 
 
@@ -561,7 +651,7 @@ class Personagem:
                 self.ouro -= preco
 
                 self.adicionar_item(
-                    "Anel encantado"
+                    "Anel de agilidade"
                 )
 
 
@@ -589,7 +679,7 @@ class Personagem:
                 self.ouro -= preco
 
                 self.adicionar_item(
-                    "Armadura de aço"
+                    "Armadura de ferro reforçada"
                 )
 
 
@@ -1517,16 +1607,17 @@ def abrir_bau(personagem):
     itens = [
 
         "Poção de cura",
-        "Poção de cura",
 
         "Espada de ferro",
+        "Espada de ferro reforçada",
 
         "Anel mágico",
+        "Anel de agilidade",
 
-        "Armadura de ferro"
+        "Armadura de ferro",
+        "Armadura de ferro reforçada"
 
     ]
-
 
     item = random.choice(
         itens
