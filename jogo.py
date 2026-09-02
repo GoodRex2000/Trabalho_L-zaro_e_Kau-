@@ -12,39 +12,34 @@ class Personagem:
         self.nome = nome
         self.classe = classe
 
-        # INVENTÁRIO
         self.inventario = []
         self.limite_inventario = 100
+        self.notas_explorador = []
 
-        # OURO
+        self.fome = 100
+        self.sede = 100
+
         self.ouro = 0
 
-        # HISTÓRIA / PROGRESSÃO DAS ARCAS
         self.arca_atual = 1
         self.dragao_derrotado = False
 
-        # XP E NÍVEL
         self.nivel = 1
         self.xp = 0
         self.xp_proximo_nivel = 100
 
-        # EQUIPAMENTOS
         self.arma = "Arma principal"
         self.anel = None
         self.armadura = None
         self.escudo = None
         self.elemento_anel = None
 
-        # NÍVEIS DOS EQUIPAMENTOS
         self.nivel_espada = 0
         self.nivel_anel = 0
         self.nivel_armadura = 0
         self.nivel_escudo = 0
-
-        # RESISTÊNCIA DO ESCUDO
         self.resistencia_escudo = 0
 
-        # CRIATURAS DOMADAS / BANDOS / SELAS
         self.criaturas = {
             "Raptor": {"domado": False, "quantidade": 0, "sela": False, "montado": False, "nivel_sela": 7},
             "T-Rex": {"domado": False, "quantidade": 0, "sela": False, "montado": False, "nivel_sela": 10},
@@ -61,13 +56,12 @@ class Personagem:
         }
         self.montaria_atual = None
 
-        # SOBREVIVÊNCIA / PROGRESSÃO ESPECIAL
         self.hipotermia = 0
         self.xp_boost_fim = 0
         self.estrutura_encontrada = 0
         self.criatura_na_jangada = None
+        self.area_atual = "floresta obscura"
 
-        # ATRIBUTOS POR CLASSE
         if classe == "guerreiro":
             self.hp = 150
             self.hp_max = 150
@@ -212,6 +206,9 @@ class Personagem:
 
         print(f"\nEspaços: {len(self.inventario)}/{self.limite_inventario}")
         print(f"Ouro: {self.ouro}")
+        self.mostrar_sobrevivencia()
+
+        print(f"Notas de Explorador: {len(self.notas_explorador)}")
 
         print("\n--- XP ---")
         print(f"Nível: {self.nivel}")
@@ -275,15 +272,10 @@ class Personagem:
             self.arma = item
             self.remover_item(item)
 
-            if item == "Espada de ferro":
-                self.danobase += 10
-            elif item == "Espada de ferro reforçada":
-                self.danobase += 25
-            elif item == "Arco":
-                self.danobase += 20
+            self.danobase += self.bonus_arma_atual()
+            if item == "Arco":
                 self.agilidadebase += 5
             elif item == "Besta":
-                self.danobase += 35
                 self.agilidadebase += 3
                 print("\nBesta equipada! Ela causa mais dano que o arco.")
 
@@ -297,7 +289,7 @@ class Personagem:
 
             self.anel = item
             self.remover_item(item)
-            self.agilidadebase += 10
+            self.agilidadebase += 10 + self.nivel_anel * 5
 
             print("\nAnel mágico equipado!")
             print("\nEscolha o elemento do Anel mágico:")
@@ -333,11 +325,11 @@ class Personagem:
 
             self.anel = item
             self.remover_item(item)
-            self.agilidadebase += 25
+            self.agilidadebase += 25 + self.nivel_anel * 10
             print("\nAnel de agilidade equipado!")
             print(f"Agilidade: {self.agilidadebase}")
 
-        elif item in ("Armadura de ferro", "Armadura de ferro reforçada"):
+        elif item in ("Armadura de ferro", "Armadura de ferro reforçada", "Roupa de pelo grosso"):
             if self.armadura is not None:
                 print("\nVocê já possui uma armadura!")
                 return
@@ -345,7 +337,7 @@ class Personagem:
             self.armadura = item
             self.remover_item(item)
 
-            aumento_hp = 25 if item == "Armadura de ferro" else 50
+            aumento_hp = (25 if item == "Armadura de ferro" else 50 if item == "Armadura de ferro reforçada" else 20) + self.nivel_armadura * 40
             self.hp_max += aumento_hp
             self.hp += aumento_hp
 
@@ -367,13 +359,13 @@ class Personagem:
 
         elif item in ("Boleadeira", "Armadilha de urso grande", "Roupa de mergulho",
                       "Flecha", "Flecha sedativa", "Tranquilizante", "Carne crua",
-                      "Carne podre", "Mejoberry", "Sela de Raptor",
+                      "Carne podre", "Mejoberry", "Amarberry", "Azulberry", "Água", "Carne cozida", "Fogueira", "Sela de Raptor",
                       "Sela de T-Rex", "Sela de Mossassauro", "Sela de Ictiossauro",
                       "Sela de Plesiossauro", "Sela de Mamute", "Sela de Carnotauro",
                       "Sela de Smilodonte", "Sela de Megalodonte", "Sela de Rinoceronte lanudo",
                       "Sela de Liopleurodon", "Sela de Yutirano", "Aço reforçado", "Metal",
                       "Madeira", "Fibra", "Pele", "Pelo grosso", "Picareta", "Machado",
-                      "Besta", "Jangada", "Roupa de couro peludo"):
+                      "Besta", "Jangada", "Roupa de pelo grosso"):
             print("\nEsse item precisa ser usado em uma atividade específica.")
             print("Use-o durante a exploração, na domesticação ou no craft.")
 
@@ -387,7 +379,7 @@ class Personagem:
     def verificar_frio(self, area):
         if area != "gelo":
             return True
-        if self.quantidade_item("Roupa de couro peludo") > 0:
+        if self.armadura == "Roupa de pelo grosso":
             self.hipotermia = max(0, self.hipotermia - 10)
             print("\nA roupa de couro peludo protege você do frio extremo.")
             return True
@@ -403,6 +395,58 @@ class Personagem:
         restante = self.tempo_boost_xp()
         if restante:
             print(f"XP 2X ativo: {restante}s restantes")
+
+    def atualizar_sobrevivencia(self, passos=1):
+        self.fome = max(0, self.fome - 3 * passos)
+        self.sede = max(0, self.sede - 4 * passos)
+
+        if self.fome == 0:
+            self.hp = max(0, self.hp - 5 * passos)
+            print("\n!!! FOME EXTREMA: você perdeu vida! !!!")
+        if self.sede == 0:
+            self.hp = max(0, self.hp - 7 * passos)
+            print("\n!!! SEDE EXTREMA: você perdeu vida! !!!")
+
+    def comer_carne_cozida(self):
+        if self.quantidade_item("Carne cozida") <= 0:
+            print("\nVocê não possui Carne cozida.")
+            return
+        self.remover_item("Carne cozida")
+        self.fome = min(100, self.fome + 25)
+        self.hp = min(self.hp_max, self.hp + 10)
+        print("\nVocê comeu 1 Carne cozida.")
+        print("+10 HP e +25 de Fome!")
+
+    def beber_agua(self):
+        if self.quantidade_item("Água") <= 0:
+            print("\nVocê não possui Água.")
+            return
+        self.remover_item("Água")
+        self.sede = min(100, self.sede + 40)
+        print("\nVocê bebeu água limpa. +40 de Sede!")
+
+    def cozinhar_carne(self):
+        if self.quantidade_item("Fogueira") <= 0:
+            print("\nVocê precisa ter uma Fogueira para cozinhar.")
+            return
+        if self.quantidade_item("Carne crua") <= 0:
+            print("\nVocê não possui Carne crua.")
+            return
+        try:
+            qtd = int(input("\nQuantas carnes deseja cozinhar? "))
+        except ValueError:
+            print("\nDigite um número!")
+            return
+        qtd = max(1, qtd)
+        qtd = min(qtd, self.quantidade_item("Carne crua"))
+        self.remover_item("Carne crua", qtd)
+        self.adicionar_item("Carne cozida", qtd)
+        print(f"\nA Fogueira cozinhou {qtd}x Carne crua. Agora você tem Carne cozida!")
+
+    def mostrar_sobrevivencia(self):
+        print("\n--- SOBREVIVÊNCIA ---")
+        print(f"Fome: {self.fome}/100")
+        print(f"Sede: {self.sede}/100")
 
     def embarcar_na_jangada(self):
         if self.quantidade_item("Jangada") <= 0:
@@ -439,6 +483,7 @@ class Personagem:
 
     def receitas_disponiveis(self):
         return {
+            "Fogueira": {"nivel": 1, "materiais": {"Madeira": 3, "Fibra": 2}, "quantidade": 1},
             "Arco": {"nivel": 5, "materiais": {"Madeira": 3, "Fibra": 4}, "quantidade": 1},
             "Flecha": {"nivel": 5, "materiais": {"Madeira": 1, "Fibra": 2}, "quantidade": 5},
             "Tranquilizante": {"nivel": 6, "materiais": {"Carne podre": 2, "Mejoberry": 3}, "quantidade": 1},
@@ -449,7 +494,7 @@ class Personagem:
             "Picareta": {"nivel": 12, "materiais": {"Madeira": 2, "Metal": 3}, "quantidade": 1},
             "Machado": {"nivel": 12, "materiais": {"Madeira": 2, "Metal": 3}, "quantidade": 1},
             "Besta": {"nivel": 13, "materiais": {"Madeira": 4, "Fibra": 5, "Metal": 6}, "quantidade": 1},
-            "Roupa de couro peludo": {"nivel": 10, "materiais": {"Fibra": 8, "Pele": 4, "Pelo grosso": 8}, "quantidade": 1},
+            "Roupa de pelo grosso": {"nivel": 10, "materiais": {"Fibra": 8, "Pele": 4, "Pelo grosso": 8}, "quantidade": 1},
             "Jangada": {"nivel": 10, "materiais": {"Madeira": 15, "Fibra": 12}, "quantidade": 1},
             "Sela de Ictiossauro": {"nivel": 6, "materiais": {"Madeira": 5, "Fibra": 6, "Metal": 2}, "quantidade": 1},
             "Sela de Raptor": {"nivel": 7, "materiais": {"Madeira": 6, "Fibra": 8, "Metal": 2}, "quantidade": 1},
@@ -470,7 +515,7 @@ class Personagem:
     def mostrar_recursos(self):
         materiais = [
             "Madeira", "Fibra", "Metal", "Carne crua", "Carne podre",
-            "Mejoberry", "Pele", "Pelo grosso", "Flecha", "Tranquilizante"
+            "Mejoberry", "Amarberry", "Azulberry", "Pele", "Pelo grosso", "Água", "Carne cozida", "Fogueira", "Flecha", "Tranquilizante"
         ]
         print("\n--- RECURSOS ---")
         for material in materiais:
@@ -837,6 +882,137 @@ class Personagem:
     # MENU DO PERSONAGEM
     # ==================================================
 
+    def bonus_arma_atual(self):
+        if self.arma == "Espada de ferro":
+            return 10 + self.nivel_espada * 10
+        if self.arma == "Espada de ferro reforçada":
+            return 25 + self.nivel_espada * 15
+        if self.arma == "Arco":
+            return 20 + self.nivel_espada * 12
+        if self.arma == "Besta":
+            return 35 + self.nivel_espada * 12
+        return 0
+
+    def desequipar_arma(self):
+        if self.arma == "Arma principal":
+            print("\nVocê não possui uma arma equipada.")
+            return
+        item = self.arma
+        self.danobase -= self.bonus_arma_atual()
+        self.danobase = max(1, self.danobase)
+        if item == "Arco":
+            self.agilidadebase = max(1, self.agilidadebase - 5)
+        if item == "Besta":
+            self.agilidadebase = max(1, self.agilidadebase - 3)
+        self.arma = "Arma principal"
+        self.adicionar_item(item)
+        print(f"\n{item} desequipada e devolvida ao inventário.")
+
+    def desequipar_armadura(self):
+        if self.armadura is None:
+            print("\nVocê não possui uma armadura equipada.")
+            return
+        item = self.armadura
+        bonus = (25 if item == "Armadura de ferro" else 50 if item == "Armadura de ferro reforçada" else 20) + self.nivel_armadura * 40
+        self.hp_max = max(1, self.hp_max - bonus)
+        self.hp = min(self.hp, self.hp_max)
+        self.armadura = None
+        self.adicionar_item(item)
+        print(f"\n{item} desequipada e devolvida ao inventário.")
+
+    def desequipar_anel(self):
+        if self.anel is None:
+            print("\nVocê não possui um anel equipado.")
+            return
+        item = self.anel
+        self.agilidadebase -= (10 if item == "Anel mágico" else 25) + self.nivel_anel * (5 if item == "Anel mágico" else 10)
+        self.agilidadebase = max(1, self.agilidadebase)
+        self.anel = None
+        self.elemento_anel = None
+        self.adicionar_item(item)
+        print(f"\n{item} desequipado e devolvido ao inventário.")
+
+    def desequipar_escudo(self):
+        if self.escudo is None:
+            print("\nVocê não possui um escudo equipado.")
+            return
+        item = self.escudo
+        self.resistencia_escudo = 0
+        self.escudo = None
+        self.adicionar_item(item)
+        print(f"\n{item} desequipado e devolvido ao inventário.")
+
+    def remover_item_menu(self):
+        if not self.inventario:
+            print("\nO inventário está vazio.")
+            return
+        unicos = list(dict.fromkeys(self.inventario))
+        print("\n--- REMOVER ITEM ---")
+        for i, item in enumerate(unicos, 1):
+            print(f"{i} - {item} x{self.quantidade_item(item)}")
+        try:
+            numero = int(input("\nNúmero do item: "))
+            if not 1 <= numero <= len(unicos):
+                print("\nItem inválido!")
+                return
+            item = unicos[numero - 1]
+            quantidade = int(input(f"Quantidade de {item} para remover: "))
+            if quantidade <= 0:
+                print("\nA quantidade deve ser maior que zero.")
+                return
+            if quantidade > self.quantidade_item(item):
+                print("\nVocê não possui essa quantidade.")
+                return
+            self.remover_item(item, quantidade)
+            print(f"\n>>> {quantidade}x {item} removido(s) do inventário. <<<")
+        except ValueError:
+            print("\nDigite números válidos!")
+
+    def menu_equipamentos(self):
+        while True:
+            print("\n==============================")
+            print("      EQUIPAR / DESEQUIPAR")
+            print("==============================")
+            print(f"Arma: {self.arma}")
+            print(f"Anel: {self.anel or 'Nenhum'}")
+            print(f"Armadura: {self.armadura or 'Nenhuma'}")
+            print(f"Escudo: {self.escudo or 'Nenhum'}")
+            print("\n1 - Equipar item do inventário")
+            print("2 - Desequipar arma")
+            print("3 - Desequipar anel")
+            print("4 - Desequipar armadura")
+            print("5 - Desequipar escudo")
+            print("6 - Voltar")
+            op = input("\nEscolha: ")
+            if op == "1":
+                self.mostrar_inventario()
+                unicos = list(dict.fromkeys(self.inventario))
+                if unicos:
+                    try:
+                        n = int(input("\nNúmero do item para equipar: "))
+                        self.usar_item(n)
+                    except ValueError:
+                        print("\nDigite um número!")
+            elif op == "2": self.desequipar_arma()
+            elif op == "3": self.desequipar_anel()
+            elif op == "4": self.desequipar_armadura()
+            elif op == "5": self.desequipar_escudo()
+            elif op == "6": break
+            else: print("\nOpção inválida!")
+
+    def menu_sobrevivencia(self):
+        while True:
+            self.mostrar_sobrevivencia()
+            print("\n1 - Comer Carne cozida (+10 HP, +25 Fome)")
+            print("2 - Beber Água (+40 Sede)")
+            print("3 - Voltar")
+            op = input("\nEscolha: ")
+            if op == "1": self.comer_carne_cozida()
+            elif op == "2": self.beber_agua()
+            elif op == "3": self.cozinhar_carne()
+            elif op == "4": break
+            else: print("\nOpção inválida!")
+
     def menu_inventario(self):
         while True:
             print("\n==============================")
@@ -844,14 +1020,16 @@ class Personagem:
             print("==============================")
 
             print("1 - Inventário")
-            print("2 - Usar equipamento/item")
-            print("3 - Craft / Construir itens")
-            print("4 - Loja")
-            print("5 - Melhorar equipamentos")
-            print("6 - Criaturas e montarias")
-            print("7 - Ler notas de explorador")
-            print("8 - Remover Item")
-            print("9 - Voltar")
+            print("2 - Remover item do inventário")
+            print("3 - Usar equipamento/item")
+            print("4 - Equipar / desequipar")
+            print("5 - Craft / Construir itens")
+            print("6 - Loja")
+            print("7 - Melhorar equipamentos")
+            print("8 - Criaturas e montarias")
+            print("9 - Ler notas de explorador")
+            print("10 - Sobrevivência / comer / beber")
+            print("11 - Voltar")
 
             escolha = input("\nEscolha: ")
 
@@ -859,13 +1037,11 @@ class Personagem:
                 self.mostrar_inventario()
 
             elif escolha == "2":
+                self.remover_item_menu()
+
+            elif escolha == "3":
                 self.mostrar_inventario()
-
-                itens_unicos = []
-                for item in self.inventario:
-                    if item not in itens_unicos:
-                        itens_unicos.append(item)
-
+                itens_unicos = list(dict.fromkeys(self.inventario))
                 if itens_unicos:
                     try:
                         numero = int(input("\nNúmero do item: "))
@@ -873,16 +1049,19 @@ class Personagem:
                     except ValueError:
                         print("\nDigite um número!")
 
-            elif escolha == "3":
-                self.sistema_craft()
-
             elif escolha == "4":
-                self.loja()
+                self.menu_equipamentos()
 
             elif escolha == "5":
-                self.melhorar_equipamentos()
+                self.sistema_craft()
 
             elif escolha == "6":
+                self.loja()
+
+            elif escolha == "7":
+                self.melhorar_equipamentos()
+
+            elif escolha == "8":
                 while True:
                     print("\n==============================")
                     print("     CRIATURAS E MONTARIAS")
@@ -905,18 +1084,13 @@ class Personagem:
                     else:
                         print("\nOpção inválida!")
 
-            elif escolha == "7":
+            elif escolha == "9":
                 ler_notas_explorador(self)
 
-            elif escolha == "8":
-                self.mostrar_inventario()
-                escolha = int(input("Escolha um item para remover: "))
-                quantidade = input("Escolha a quantidade: ")
-                if not escolha - 1 in len(self.inventario):
-                    print("Item inválido")
-                self.remover_item(self, escolha, quantidade)
+            elif escolha == "10":
+                self.menu_sobrevivencia()
 
-            elif escolha == "9":
+            elif escolha == "11":
                 break
 
             else:
@@ -999,9 +1173,9 @@ def historia():
         ("A MISSÃO",
          "Explore, evolua, domestique criaturas e descubra como chegar à próxima Arca."),
         ("O GUARDIÃO",
-         "Um Dragão carregado de energia do elemento, por estar corrompido, a coloração preodminante é o roxo, o azul indica criaturas que nao foram corrompidas pelo elemento RAGNAROCK I."),
+         "Um Dragão carregado de energia do Núcleo protege a saída da RAGNAROCK I."),
         ("O FUTURO",
-         "Sua missão é derrotar o dragão para completar o mapa RAGNAROCK I, e liberar o acesso ao RAGNAROCK II."),
+         "Derrotar o Dragão liberará o caminho para a RAGNAROCK II."),
     ]
 
     for titulo, texto in cenas:
@@ -1183,12 +1357,54 @@ def mundo(personagem):
 # EXPLORAÇÃO
 # ==================================================
 
+def clima_aleatorio(personagem, local):
+    evento = random.randint(1, 100)
+    if local == "gelo" and evento <= 30:
+        print("\n!!! TEMPESTADE DE GELO !!!")
+        print("A neve congela o ar ao seu redor e a visibilidade cai drasticamente.")
+        if personagem.armadura != "Roupa de pelo grosso":
+            personagem.hipotermia += 15
+            print(f"Hipotermia aumentou para {personagem.hipotermia}%.")
+    elif local != "oceano" and evento <= 25:
+        print("\n>>> CHUVA <<<")
+        print("Uma chuva forte começa a cair sobre a região.")
+    else:
+        print("\nO clima permanece estável por enquanto.")
+
+
+def encontrar_riacho(personagem):
+    print("\n================================")
+    print("           RIACHO")
+    print("================================")
+    print("Você encontrou um riacho de água aparentemente limpa.")
+    escolha = input("\nDeseja coletar água? (s/n): ").lower()
+    if escolha == "s":
+        qtd = random.randint(1, 3)
+        personagem.adicionar_item("Água", qtd)
+        print(f"Você coletou {qtd}x Água.")
+    else:
+        print("Você decidiu não coletar água.")
+
+
 def explorar(local, personagem):
     print("\n================================")
     print("          EXPLORAÇÃO")
     print("================================")
+    personagem.area_atual = local
     print(f"\nVocê está explorando: {local}...")
+    personagem.atualizar_sobrevivencia(1)
+    clima_aleatorio(personagem, local)
     time.sleep(0.5)
+
+    if personagem.hp <= 0:
+        print("\nVocê não consegue continuar por causa das condições de sobrevivência.")
+        return True
+
+    if local == "covil do dragão" and personagem.nivel < 30:
+        print("\nHELENA: você não está pronto para a batalha final.")
+        print(f"Nível atual: {personagem.nivel}/30.")
+        print("O combate contra o Dragão será liberado somente a partir do nível 30.")
+        return False
 
     if local == "covil do dragão" and not personagem.criaturas["Yutirano"]["domado"]:
         print("\nHELENA: acesso bloqueado. Um Yutirano domado é necessário para enfrentar o Dragão.")
@@ -1197,12 +1413,13 @@ def explorar(local, personagem):
     if local == "gelo" and not personagem.verificar_frio("gelo"):
         return True
 
+    if local != "oceano" and random.randint(1, 100) <= 20:
+        encontrar_riacho(personagem)
+
     if random.randint(1, 100) <= 22:
         encontrar_estrutura_abandonada(personagem, local)
 
-    if random.randint(1, 100) <= 35:
-        if local != "oceano":
-            coletar_planta(personagem)
+    if random.randint(1, 100) <= 55:
         encontrar_recurso(local, personagem)
 
     if local == "oceano":
@@ -1212,17 +1429,17 @@ def explorar(local, personagem):
         if personagem.montaria_atual not in montarias_marinhas:
             if personagem.quantidade_item("Jangada") <= 0:
                 print("\nSem Jangada ou montaria marinha, você só consegue explorar águas rasas.")
-                return False
-            print("\nVocê coloca a Jangada no oceano e consegue avançar.")
-            if personagem.criatura_na_jangada:
-                print(f"Você está levando {personagem.criatura_na_jangada} como passageiro.")
+            else:
+                print("\nVocê coloca a Jangada no oceano e consegue avançar.")
+                if personagem.criatura_na_jangada:
+                    print(f"Você está levando {personagem.criatura_na_jangada} como passageiro.")
 
     if random.randint(1, 100) <= 70:
         resultado = encontro_criatura(local, personagem)
         if resultado:
             return resultado
 
-    if local not in ("gelo", "oceano") and random.randint(1, 100) <= 60:
+    if local not in ("gelo", "oceano", "covil do dragão") and random.randint(1, 100) <= 60:
         return adversario(local, personagem)
 
     if local == "gelo" and random.randint(1, 100) <= 40:
@@ -1238,39 +1455,73 @@ def encontrar_recurso(local, personagem):
     print("      RECURSOS ENCONTRADOS")
     print("================================")
 
-    if local == "floresta obscura":
-        item = random.choice(["Madeira", "Fibra", "Mejoberry", "Pele"])
-    elif local == "vilarejo":
-        item = random.choice(["Metal", "Fibra", "Carne podre", "Pele"])
-    elif local == "ruínas da antiga Aetéria":
-        item = random.choice(["Metal", "Aço reforçado", "Fibra", "Mejoberry"])
-    elif local == "oceano":
-        item = random.choice(["Fibra", "Carne crua", "Pele"])
-    elif local == "gelo":
-        item = random.choice(["Fibra", "Mejoberry", "Pele", "Pelo grosso"])
-    else:
-        item = "Fibra"
+    if local == "oceano":
+        # Nunca oferecer árvores ou arbustos no oceano.
+        item = random.choice(["Fibra", "Pele", "Carne crua", "Metal"])
+        if item == "Metal":
+            minerar_rocha(personagem)
+        else:
+            personagem.adicionar_item(item)
+            print(f"\nVocê encontrou: {item}!")
+        return
 
+    if local in ("floresta obscura", "vilarejo", "ruínas da antiga Aetéria", "gelo"):
+        evento = random.randint(1, 100)
+        if local == "floresta obscura" and evento <= 45:
+            if evento <= 25:
+                coletar_planta(personagem)
+            else:
+                cortar_arvore(personagem)
+            return
+        if local == "gelo" and evento <= 25:
+            minerar_rocha(personagem)
+            return
+        if evento <= 45:
+            minerar_rocha(personagem)
+            return
+
+    item = random.choice(["Fibra", "Pele", "Metal", "Aço reforçado"] if local != "gelo" else ["Fibra", "Pele", "Pelo grosso"])
     personagem.adicionar_item(item)
     print(f"\nVocê encontrou: {item}!")
 
 
 def coletar_planta(personagem):
-    print("\nVocê encontrou uma planta selvagem cheia de frutos.")
-    personagem.adicionar_item("Mejoberry", random.randint(2, 4))
-    personagem.adicionar_item("Fibra", random.randint(3, 6))
+    print("\n================================")
+    print("           ARBUSTO")
+    print("================================")
+    escolha = input("\nVocê encontrou um arbusto com frutos. Deseja coletá-lo? (s/n): ").lower()
+    if escolha != "s":
+        print("Você deixou o arbusto intacto.")
+        return
+
+    frutas = [("Mejoberry", 50), ("Amarberry", 25), ("Azulberry", 25)]
+    fruta = random.choices([x[0] for x in frutas], weights=[x[1] for x in frutas], k=1)[0]
+    personagem.adicionar_item(fruta, random.randint(2, 5))
+    if random.randint(1, 100) <= 60:
+        personagem.adicionar_item("Fibra", random.randint(2, 6))
+    print("\nO arbusto também forneceu algumas fibras.")
 
 
 def socar_arvore(personagem):
-    print("\nVocê socou uma árvore com as mãos.")
-    personagem.hp = max(0, personagem.hp - 1)
-    personagem.adicionar_item("Madeira", 1)
-    print("Você recebeu 1 de dano por bater na árvore com a mão.")
+    print("\nVocê decidiu usar as próprias mãos para quebrar a árvore.")
+    while personagem.hp > 0:
+        personagem.hp = max(0, personagem.hp - 1)
+        personagem.adicionar_item("Madeira", 1)
+        print(f"Você socou a árvore: -1 HP, +1 Madeira. HP: {personagem.hp}/{personagem.hp_max}")
+        if input("Deseja dar outro soco? (s/n): ").lower() != "s":
+            break
 
 
 def cortar_arvore(personagem):
+    print("\n================================")
+    print("            ÁRVORE")
+    print("================================")
+    escolha = input("\nDeseja quebrar a árvore para conseguir Madeira? (s/n): ").lower()
+    if escolha != "s":
+        print("Você decidiu não quebrar a árvore.")
+        return
     if personagem.quantidade_item("Machado") <= 0:
-        print("\nVocê precisa de um Machado. Vai usar as mãos.")
+        print("\nVocê não possui Machado. Poderá quebrar a árvore com os punhos, sofrendo 1 dano por batida.")
         socar_arvore(personagem)
         return
     qtd = random.randint(4, 7)
@@ -1279,12 +1530,19 @@ def cortar_arvore(personagem):
 
 
 def minerar_rocha(personagem):
+    print("\n================================")
+    print("            ROCHA")
+    print("================================")
+    escolha = input("\nDeseja quebrar a rocha para coletar Metal? (s/n): ").lower()
+    if escolha != "s":
+        print("Você deixou a rocha para trás.")
+        return
     if personagem.quantidade_item("Picareta") <= 0:
-        print("\nVocê precisa de uma Picareta para extrair Metal.")
+        print("\nVocê não possui uma Picareta e não consegue quebrar esta rocha.")
         return
     qtd = random.randint(2, 5)
     personagem.adicionar_item("Metal", qtd)
-    print(f"\nVocê extraiu {qtd}x Metal de uma rocha comum.")
+    print(f"\nVocê extraiu {qtd}x Metal de uma rocha.")
 
 
 def encontrar_estrutura_abandonada(personagem, local):
@@ -1305,7 +1563,9 @@ def encontrar_estrutura_abandonada(personagem, local):
             "Nota de Explorador #03", "Nota de Explorador #04",
             "Nota de Explorador #05"
         ])
-        personagem.adicionar_item(nota)
+        if nota not in personagem.notas_explorador:
+            personagem.notas_explorador.append(nota)
+            print(f"\n>>> {nota} adicionada às suas Notas de Explorador! <<<")
         personagem.estrutura_encontrada += 1
         personagem.ativar_boost_xp(60)
     else:
@@ -1314,7 +1574,7 @@ def encontrar_estrutura_abandonada(personagem, local):
 
 
 def ler_notas_explorador(personagem):
-    notas = [item for item in personagem.inventario if item.startswith("Nota de Explorador #")]
+    notas = personagem.notas_explorador
     if not notas:
         print("\nVocê não possui notas de explorador.")
         return
@@ -1322,7 +1582,7 @@ def ler_notas_explorador(personagem):
         "Nota de Explorador #01": "Os Raptores caçam em bando. Quanto maior o bando, melhor a coordenação e maior o dano.",
         "Nota de Explorador #02": "O T-Rex provoca ferimentos profundos. O sangramento pode continuar depois da mordida.",
         "Nota de Explorador #03": "O oceano possui criaturas rápidas e predadores gigantes. O Ictiossauro é veloz e seu CHACOALHAR pode atordoar uma criatura marinha.",
-        "Nota de Explorador #04": "Mamutes e rinocerontes lanudos dominam o gelo. A única defesa confiável contra o frio é uma roupa de couro e pelo grosso.",
+        "Nota de Explorador #04": "Mamutes, rinocerontes lanudos e Yutiranos dominam o gelo. O pelo grosso dessas criaturas pode ser usado para fabricar uma roupa capaz de proteger contra o frio extremo.",
         "Nota de Explorador #05": "O Yutirano lidera Carnotauros. Seu rugido aumenta o poder dos servos. Uma anotação diz: 'O Dragão parece ser vulnerável à mesma força.'",
     }
     print("\n==============================")
@@ -1488,10 +1748,11 @@ def requisitos_domesticar(personagem, nome):
             personagem.quantidade_item("Carne crua") >= 3,
         )
     if nome in ("Mamute", "Rinoceronte lanudo"):
-        return (
-            personagem.nivel >= 10,
-            personagem.quantidade_item("Mejoberry") >= 5,
+        possui_fruta = any(
+            personagem.quantidade_item(fruta) >= 5
+            for fruta in ("Mejoberry", "Amarberry", "Azulberry")
         )
+        return (personagem.nivel >= 10, possui_fruta)
     if nome == "Smilodonte":
         return (personagem.nivel >= 11, personagem.quantidade_item("Flecha sedativa") > 0, personagem.quantidade_item("Carne crua") >= 5)
     if nome == "Carnotauro":
@@ -1541,7 +1802,20 @@ def tentar_domesticar(personagem, criatura, bando=1):
         print("\nVocê veste a roupa de mergulho e entra na água com seu Ictiossauro.")
     elif nome in ("Mamute", "Rinoceronte lanudo"):
         print("\nVocê se aproxima devagar e oferece frutos.")
-        return processo_domesticacao(personagem, criatura, "Mejoberry", 5)
+        frutas = [fruta for fruta in ("Mejoberry", "Amarberry", "Azulberry") if personagem.quantidade_item(fruta) >= 5]
+        if not frutas:
+            print("Você precisa de pelo menos 5 frutos para domesticar.")
+            return "nao_preparado"
+        print("Escolha a fruta para a domesticação:")
+        for i, fruta in enumerate(frutas, 1):
+            print(f"{i} - {fruta} ({personagem.quantidade_item(fruta)} disponíveis)")
+        try:
+            escolha_fruta = int(input("Escolha: "))
+            fruta_escolhida = frutas[escolha_fruta - 1]
+        except (ValueError, IndexError):
+            print("Opção inválida.")
+            return "nao_preparado"
+        return processo_domesticacao(personagem, criatura, fruta_escolhida, 5)
 
     if nome == "Ictiossauro":
         return processo_domesticacao(personagem, criatura, "Carne crua", 2)
@@ -1634,6 +1908,9 @@ def adversario(local, personagem):
         else:
             inimigo = Inimigo("Tempestade de Gelo", 120, 25, 10, 50, 100)
     elif local == "covil do dragão":
+        if personagem.nivel < 30:
+            print("\nHELENA: você não está pronto para a batalha final. Alcance o nível 30.")
+            return False
         if not personagem.criaturas["Yutirano"]["domado"]:
             print("\nHELENA: o guardião final exige um Yutirano domado.")
             return False
@@ -1723,12 +2000,19 @@ def batalha(personagem, inimigo):
         personagem.ganhar_xp(inimigo.xp)
 
         if inimigo.nome != "DRAGÃO":
-            personagem.adicionar_item("Carne crua")
-            if random.randint(1, 100) <= 45:
-                personagem.adicionar_item("Carne podre")
-            if inimigo.nome in ("Mamute", "Rinoceronte lanudo"):
-                personagem.adicionar_item("Pelo grosso", random.randint(2, 4))
+            pegar_carne = input("\nDeseja coletar a carne da criatura? (s/n): ").lower()
+            if pegar_carne == "s":
+                personagem.adicionar_item("Carne crua", random.randint(1, 3))
+                if random.randint(1, 100) <= 45:
+                    personagem.adicionar_item("Carne podre")
+            else:
+                print("Você deixou a carne para trás.")
+
+            if inimigo.nome in ("Mamute", "Rinoceronte lanudo", "Yutirano"):
+                qtd_pelo = random.randint(3, 6)
+                personagem.adicionar_item("Pelo grosso", qtd_pelo)
                 personagem.adicionar_item("Pele", random.randint(1, 3))
+                print(f"\nA criatura possuía pelo grosso. Você conseguiu {qtd_pelo}x Pelo grosso!")
 
         if inimigo.nome == "DRAGÃO":
             personagem.dragao_derrotado = True
@@ -1841,30 +2125,30 @@ def caminhar(personagem):
 
     for i in range(tempo):
         print(f"\nCaminhando... {i+1}/{tempo}")
+        personagem.atualizar_sobrevivencia(1)
         personagem.estado_xp()
+        if personagem.hp <= 0:
+            print("\nVocê caiu durante a caminhada por falta de comida ou água.")
+            return
         time.sleep(0.4)
+
+    clima_aleatorio(personagem, personagem.area_atual)
+    if personagem.area_atual != "oceano" and random.randint(1, 100) <= 15:
+        encontrar_riacho(personagem)
+    if random.randint(1, 100) <= 55:
+        encontrar_recurso(personagem.area_atual, personagem)
 
     evento = random.randint(1, 100)
     if evento <= 15:
         encontrar_loja(personagem)
-    elif evento <= 35:
-        encontrar_estrutura_abandonada(personagem, "floresta obscura")
-    elif evento <= 55:
-        coletar_planta(personagem)
-    elif evento <= 70:
-        cortar_arvore(personagem)
-    else:
-        minerar_rocha(personagem)
+    elif evento <= 30:
+        encontrar_estrutura_abandonada(personagem, personagem.area_atual)
 
     if random.randint(1, 100) <= 60:
         encontrar_bau(personagem)
 
     print("\nVocê terminou sua caminhada.")
 
-
-# ==================================================
-# LOJA NO CAMINHO
-# ==================================================
 
 def encontrar_loja(personagem):
     print("\n================================")
@@ -1905,7 +2189,9 @@ def encontrar_caverna_oceano(personagem):
     personagem.adicionar_item("Metal", random.randint(2, 5))
     personagem.adicionar_item("Fibra", random.randint(3, 6))
     if random.randint(1, 100) <= 50:
-        personagem.adicionar_item("Nota de Explorador #03")
+        if "Nota de Explorador #03" not in personagem.notas_explorador:
+            personagem.notas_explorador.append("Nota de Explorador #03")
+            print("\n>>> Nota de Explorador #03 adicionada às suas notas! <<<")
 
 
 # ==================================================
@@ -1936,7 +2222,7 @@ def abrir_bau(personagem):
     print("         ABRINDO BAÚ...")
     print("================================")
 
-    time.sleep(1.5)
+    time.sleep(1.0)
 
     itens = [
         "Poção de cura",
