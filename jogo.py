@@ -14,7 +14,7 @@ class Personagem:
 
         # INVENTÁRIO
         self.inventario = []
-        self.limite_inventario = 40
+        self.limite_inventario = 100
 
         # OURO
         self.ouro = 0
@@ -850,7 +850,8 @@ class Personagem:
             print("5 - Melhorar equipamentos")
             print("6 - Criaturas e montarias")
             print("7 - Ler notas de explorador")
-            print("8 - Voltar")
+            print("8 - Remover Item")
+            print("9 - Voltar")
 
             escolha = input("\nEscolha: ")
 
@@ -908,6 +909,14 @@ class Personagem:
                 ler_notas_explorador(self)
 
             elif escolha == "8":
+                self.mostrar_inventario()
+                escolha = int(input("Escolha um item para remover: "))
+                quantidade = input("Escolha a quantidade: ")
+                if not escolha - 1 in len(self.inventario):
+                    print("Item inválido")
+                self.remover_item(self, escolha, quantidade)
+
+            elif escolha == "9":
                 break
 
             else:
@@ -990,9 +999,9 @@ def historia():
         ("A MISSÃO",
          "Explore, evolua, domestique criaturas e descubra como chegar à próxima Arca."),
         ("O GUARDIÃO",
-         "Um Dragão carregado de energia do Núcleo protege a saída da RAGNAROCK I."),
+         "Um Dragão carregado de energia do elemento, por estar corrompido, a coloração preodminante é o roxo, o azul indica criaturas que nao foram corrompidas pelo elemento RAGNAROCK I."),
         ("O FUTURO",
-         "Derrotar o Dragão liberará o caminho para a RAGNAROCK II."),
+         "Sua missão é derrotar o dragão para completar o mapa RAGNAROCK I, e liberar o acesso ao RAGNAROCK II."),
     ]
 
     for titulo, texto in cenas:
