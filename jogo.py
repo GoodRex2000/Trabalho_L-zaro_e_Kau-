@@ -1104,17 +1104,17 @@ def historia():
 
     input("\nAperte ENTER para iniciar a transmissão...")
 
-    cenas = [
-        ("ANO 2187",
-         "A humanidade havia alcançado um nível de tecnologia nunca visto."),
+ cenas = [
+        ("ANO 3500",
+         "A umanidade estava sem salvação, recuros naturais estavame se esgotando e a maior parte da vida animal ja havia sido extinta a muito tempo, se nao fizecem algo rapido o planeta terra estaria condenado."),
         ("O ELEMENTO",
-         "Até que um objeto misterioso caiu do céu e atingiu a Terra."),
+         "em um observatorio, cientistas avistararam um elemento misterioso entrando na atmosfera da terra, apos cair, cientistas de todo o mundo e governos começarama estudar."),
         ("O NÚCLEO",
-         "Chamado de Núcleo, ele possuía uma energia capaz de alterar a matéria."),
+         "o nucleo deste elemento misterioso é capaz de mudar a propria materia, podendo ser usado para poder e conquistação mundial, sendo possivel usar esta força como arma."),
         ("A GUERRA",
-         "Duas grandes nações, Aetéria e Valtor, começaram uma guerra pelo Núcleo."),
+         "Duas grandes nações, ragnar e valgueiro, começaram uma guerra para decidir quem ficara com o elemento misterioso."),
         ("A QUEDA",
-         "As armas alimentadas pelo elemento destruíram cidades, oceanos e continentes."),
+         "As armas alimentadas pelo elemento destruíram cidades, oceanos e continentes, acabando por vez a posibilidade de vidas existirem no planeta terra."),
         ("AS QUATRO ARCAS",
          "Os últimos cientistas construíram quatro arcas espaciais chamadas RAGNAROCK."),
         ("OS CLONES",
@@ -1122,19 +1122,19 @@ def historia():
         ("O HOLOGRAMA",
          "Para preservar as memórias, consciências holográficas foram copiadas de pessoas que já existiram."),
         ("O DESPERTAR",
-         "Você desperta na RAGNAROCK I, dentro do corpo de um clone humano."),
+         "Você desperta na RAGNAROCK I, dentro de um holograma humano."),
         ("A SOLIDÃO",
-         "Não há outros humanos vivos nesta Arca. Só você, as criaturas alteradas e a inteligência artificial HELENA."),
+         "Não há outros humanos vivos nesta Arca. Só você, as criaturas alteradas com o elemento misterioso, e a inteligência artificial HELENA."),
         ("HELENA",
          "HELENA controla os sistemas da Arca, vende equipamentos e preserva registros deixados pelos antigos exploradores."),
         ("A VIDA SELVAGEM",
-         "A energia do Núcleo alterou a vida da Terra. Criaturas antigas e novas espécies agora dominam as ruínas."),
+         "a energia do Núcleo alterou a vida da Terra. Criaturas antigas e novas espécies agora dominam as ruínas."),
         ("A MISSÃO",
          "Explore, evolua, domestique criaturas e descubra como chegar à próxima Arca."),
         ("O GUARDIÃO",
-         "Um Dragão carregado de energia do Núcleo protege a saída da RAGNAROCK I."),
+         "um Dragão carregado de energia do Núcleo protege a saída da RAGNAROCK I."),
         ("O FUTURO",
-         "Derrotar o Dragão liberará o caminho para a RAGNAROCK II."),
+         "derrotar o Dragão liberará o caminho para a RAGNAROCK II."),
     ]
 
     for titulo, texto in cenas:
