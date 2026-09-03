@@ -2132,16 +2132,28 @@ def abrir_bau(personagem):
         "Flecha",
     ]
 
-    item = random.choice(itens)
+    chance_bom_ruim = random.randint(1, 100)
+    if chance_bom_ruim <= 80:
+        item = random.choice(itens)
 
-    print("\n!!! VOCÊ ENCONTROU !!!")
-    print(f"\n>>> {item} <<<")
+        print("\n!!! VOCÊ ENCONTROU !!!")
+        print(f"\n>>> {item} <<<")
 
-    personagem.adicionar_item(item)
+        personagem.adicionar_item(item)
 
-    print("\nO item foi guardado no seu inventário!")
+        print("\nO item foi guardado no seu inventário!")
+
+    else:
+        print("\nO tesouro parece estranho...")
+        time.sleep(1.0)
+        print("\nVocê abre o baú e uma armadilha é acionada!")
+        personagem.hp = max(0, personagem.hp - 50)
+        print("\nQue azar!")
 
 # INICIAR
 
 def iniciar_jogo():
     jogar()
+
+if __name__ == "__main__":
+    iniciar_jogo()
